@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, TrendingUp, Gamepad2, Trophy, HelpCircle, FileText, Briefcase, Mic, ChevronDown, ChevronUp, Star, Users, Code, Info, Globe, Cpu, Settings, Plus } from 'lucide-react';
+import { Home, TrendingUp, HelpCircle, FileText, Briefcase, ChevronDown, ChevronUp, Users, Info, Cpu, Settings } from 'lucide-react';
 import { Community } from '../types';
 
 interface SidebarProps {
@@ -118,15 +118,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isLog
           active={currentView === 'opc'} 
           onClick={() => onNavigate('opc')} 
         />
-        
-        {/* Coming Soon Sections */}
-        <div className="my-2 border-t border-gray-50"></div>
-        <SidebarItem icon={<Gamepad2 size={20} strokeWidth={1.5} />} label="游戏世界" comingSoon />
-        <SidebarItem icon={<Trophy size={20} strokeWidth={1.5} />} label="体育竞技" comingSoon />
-        <SidebarItem icon={<Briefcase size={20} strokeWidth={1.5} />} label="商业财经" comingSoon />
-        <SidebarItem icon={<Code size={20} strokeWidth={1.5} />} label="编程技术" comingSoon />
-        <SidebarItem icon={<Star size={20} strokeWidth={1.5} />} label="影视娱乐" comingSoon />
-        <SidebarItem icon={<Mic size={20} strokeWidth={1.5} />} label="播客访谈" comingSoon />
       </SidebarSection>
 
       <SidebarSection title="平台资源">
