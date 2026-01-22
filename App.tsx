@@ -9,7 +9,7 @@ import { LoginModal } from './components/LoginModal';
 import { CreatePostModal } from './components/CreatePostModal';
 import { SettingsView } from './components/SettingsView';
 import { Post, Community } from './types';
-import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check } from 'lucide-react';
+import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check, MailOpen } from 'lucide-react';
 import { Button } from './components/Button';
 
 // Mock Data: Home Feed
@@ -95,6 +95,8 @@ const COMMUNITIES_DATA: Community[] = [
   { id: 'c8', name: '管脑', desc: '物联网控制中心、数据可视化与楼宇自控系统。', members: '7.6k', icon: 'https://picsum.photos/60/60?random=108' },
   { id: 'c9', name: '可建', desc: '可持续建筑技术、BCORE 材料应用与施工案例。', members: '10.2k', icon: 'https://picsum.photos/60/60?random=109' },
   { id: 'c10', name: '再生资源', desc: '废旧物资回收、循环经济与环保再生技术。', members: '6.5k', icon: 'https://picsum.photos/60/60?random=110' },
+  // Feedback Community Added
+  { id: 'c11', name: '意见反馈', desc: '您的声音是我们进步的动力。欢迎在此反馈 Bug、提出建议。', members: '1.2k', icon: 'https://picsum.photos/60/60?random=999' },
 ];
 
 // Mock Data: OPC Projects
@@ -329,6 +331,39 @@ const App: React.FC = () => {
     if (currentView === 'communities') {
       return (
         <div className="animate-in fade-in duration-300">
+           {/* New Feedback Collection Section */}
+           <div className="mb-8">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
+                 {/* Decorative background circle */}
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2"></div>
+                 
+                 <div className="flex items-start gap-4 relative z-10">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-broad-600 shadow-sm shrink-0">
+                       <MailOpen size={24} />
+                    </div>
+                    <div>
+                       <h3 className="text-lg font-bold text-gray-900 mb-1">意见收集箱</h3>
+                       <p className="text-sm text-gray-600 max-w-md leading-relaxed">
+                          我们致力于打造更优质的社区体验。如果您有任何建议、功能请求或发现 Bug，欢迎随时告诉我们。您的每一条反馈都至关重要！
+                       </p>
+                    </div>
+                 </div>
+                 
+                 <div className="relative z-10 shrink-0">
+                    <Button 
+                       className="bg-white text-broad-600 hover:bg-white/80 border border-broad-200 hover:border-broad-300 shadow-sm px-6"
+                       onClick={() => {
+                         // Find the feedback community and navigate to it
+                         const feedbackComm = COMMUNITIES_DATA.find(c => c.name === '意见反馈');
+                         if (feedbackComm) handleNavigateToCommunity(feedbackComm);
+                       }}
+                    >
+                       去反馈
+                    </Button>
+                 </div>
+              </div>
+           </div>
+
           <div className="flex items-center justify-between mb-6 px-1">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <Users size={24} className="text-broad-600" />

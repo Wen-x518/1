@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, Link as LinkIcon, List, CheckSquare, Quote, Image as ImageIcon, Video, Table, Code, Minus, Undo, Redo, Maximize, Smile, Type, Eraser, AlignJustify, ChevronDown } from 'lucide-react';
+import { X, Plus, Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, Link as LinkIcon, List, CheckSquare, Quote, Image as ImageIcon, Video, Table, Code, Minus, Undo, Redo, Maximize, Smile, Type, Eraser, AlignJustify, ChevronDown, Wand2, Sparkles } from 'lucide-react';
 import { Community } from '../types';
 import { Button } from './Button';
+import { polishContent } from '../services/gemini';
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
   const [content, setContent] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [isPolishing, setIsPolishing] = useState(false);
 
   // Initialize form when opened
   useEffect(() => {
@@ -26,6 +28,7 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
        setSummary('');
        setContent('');
        setCoverImage(null);
+       setIsPolishing(false);
     }
   }, [isOpen, defaultCommunityId]);
 
@@ -40,6 +43,15 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handlePolishContent = async () => {
+    if (!content.trim()) return alert("请先输入一些内容再进行润色。");
+    
+    setIsPolishing(true);
+    const polished = await polishContent(content);
+    setContent(polished);
+    setIsPolishing(false);
   };
 
   const handleSubmit = () => {
@@ -176,9 +188,19 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClos
 
           {/* Content Editor Section */}
           <div className="space-y-2 h-[500px] flex flex-col">
-             <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
-               文章内容 <span className="text-red-500">*</span>
-             </label>
+             <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-gray-700 flex items-center gap-1">
+                  文章内容 <span className="text-red-500">*</span>
+                </label>
+                <button 
+                  onClick={handlePolishContent}
+                  disabled={isPolishing}
+                  className="flex items-center gap-1 text-xs font-bold text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                >
+                  <Sparkles size={14} className={isPolishing ? "animate-spin" : ""} />
+                  {isPolishing ? "火妙AI 润色中..." : "火妙AI 润色"}
+                </button>
+             </div>
              <div className="flex-1 flex flex-col border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-gray-100 focus-within:ring-2 focus-within:ring-broad-500/50 focus-within:border-broad-500 transition-all">
                {/* Toolbar */}
                <div className="flex items-center flex-wrap gap-1 p-2 border-b border-gray-100 bg-gray-50/80 backdrop-blur-sm shrink-0">

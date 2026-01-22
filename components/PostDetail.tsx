@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, ArrowDown, MessageSquare, Share2, ArrowLeft, User, Link as LinkIcon, Check } from 'lucide-react';
+import { ArrowUp, ArrowDown, MessageSquare, Share2, ArrowLeft, User, Link as LinkIcon, Check, Sparkles, Flame } from 'lucide-react';
 import { Post, Comment, Community } from '../types';
 import { Button } from './Button';
+import { generateAiComment } from '../services/gemini';
 
 interface PostDetailProps {
   post: Post;
@@ -43,11 +44,50 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
   const [voteStatus, setVoteStatus] = useState<'up' | 'down' | null>(null);
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<Comment[]>(INITIAL_COMMENTS);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   // Share Menu State
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [showCopyFeedback, setShowCopyFeedback] = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
+
+  // Generate AI Comment on mount or post change
+  useEffect(() => {
+     let isMounted = true;
+
+     const fetchAiComment = async () => {
+         // Reset comments to initial + potentially previous AI comment if we were caching, 
+         // but for simplicity, let's reset to INITIAL on new post
+         setComments(INITIAL_COMMENTS); 
+
+         setIsAiLoading(true);
+         
+         // Artificial delay to make it feel like "Thinking" if the API is instant (or mock)
+         await new Promise(r => setTimeout(r, 600));
+
+         const aiText = await generateAiComment(post.title, post.content || '');
+         
+         if (isMounted) {
+             const aiComment: Comment = {
+                 id: 'ai-comment-' + post.id,
+                 author: '火妙AI',
+                 content: aiText,
+                 upvotes: 999,
+                 timeAgo: '刚刚'
+             };
+             setComments(prev => {
+                // Remove any existing AI comments to avoid dupes if strict mode runs twice
+                const filtered = prev.filter(c => c.author !== '火妙AI');
+                return [aiComment, ...filtered];
+             });
+             setIsAiLoading(false);
+         }
+     };
+
+     fetchAiComment();
+
+     return () => { isMounted = false; };
+  }, [post.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,7 +143,12 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
       timeAgo: '刚刚'
     };
 
-    setComments([newComment, ...comments]);
+    setComments(prev => {
+        // Keep AI comment at top
+        const aiComm = prev.find(c => c.author === '火妙AI');
+        const others = prev.filter(c => c.author !== '火妙AI');
+        return aiComm ? [aiComm, newComment, ...others] : [newComment, ...others];
+    });
     setCommentText('');
   };
 
@@ -136,7 +181,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
       <div className="px-4 pb-10">
         {/* Main Post Content */}
         <div className="flex gap-4 mb-6">
-           {/* Content Column (Removed Left Vote Sidebar) */}
+           {/* Content Column */}
            <div className="flex-1 min-w-0 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               {/* Post Header */}
               <div className="p-4 sm:p-6 pb-2">
@@ -168,7 +213,6 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
 
               {/* Actions Footer */}
               <div className="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center gap-2 text-gray-500 text-sm font-bold">
-                  {/* Vote Buttons (Inline) */}
                   <div className="flex items-center bg-gray-100 rounded-full border border-transparent hover:border-gray-200 transition-colors mr-2">
                        <button 
                          onClick={() => handleVote('up')}
@@ -245,33 +289,47 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
                  <button className="text-xs font-bold text-gray-900 flex items-center gap-1 hover:bg-gray-100 px-2 py-1 rounded">
                    默认排序 <ArrowDown size={14} />
                  </button>
+                 {isAiLoading && (
+                     <div className="flex items-center gap-1 text-xs text-orange-500 animate-pulse">
+                         <Sparkles size={12} /> 火妙AI 正在生成评论...
+                     </div>
+                 )}
               </div>
 
               {/* Comments List */}
               <div className="bg-gray-50/30">
-                 {comments.map((comment, index) => (
-                    <div key={comment.id} className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors ${index !== comments.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                 {comments.map((comment, index) => {
+                    const isAi = comment.author === '火妙AI';
+                    return (
+                    <div key={comment.id} className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors ${index !== comments.length - 1 ? 'border-b border-gray-100' : ''} ${isAi ? 'bg-orange-50/40 hover:bg-orange-50/60' : ''}`}>
                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 shrink-0 overflow-hidden">
-                             {/* Simple avatar logic */}
-                             {isLoggedIn && comment.author === currentUser?.displayName ? (
-                               <img src={currentUser?.avatar} alt="" className="w-full h-full object-cover"/>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-gray-500 shrink-0 overflow-hidden ${isAi ? 'bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-sm' : 'bg-gray-200'}`}>
+                             {/* Avatar Logic */}
+                             {isAi ? (
+                                 <Flame size={16} fill="currentColor" />
                              ) : (
-                               <User size={16} />
+                                 isLoggedIn && comment.author === currentUser?.displayName ? (
+                                   <img src={currentUser?.avatar} alt="" className="w-full h-full object-cover"/>
+                                 ) : (
+                                   <User size={16} />
+                                 )
                              )}
                           </div>
                           <div className="flex-1">
                              <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                                <span className="font-bold text-gray-900">{comment.author}</span>
+                                <span className={`font-bold ${isAi ? 'text-orange-600 flex items-center gap-1' : 'text-gray-900'}`}>
+                                    {comment.author}
+                                    {isAi && <span className="bg-orange-100 text-orange-700 border border-orange-200 text-[9px] px-1 py-0.5 rounded-full leading-none">AI Bot</span>}
+                                </span>
                                 <span>•</span>
                                 <span>{comment.timeAgo}</span>
                              </div>
-                             <p className="text-sm text-gray-800 leading-relaxed mb-2">{comment.content}</p>
+                             <p className="text-sm text-gray-800 leading-relaxed mb-2 whitespace-pre-wrap">{comment.content}</p>
                              <div className="flex items-center gap-4 text-gray-400 text-xs font-bold">
                                 <div className="flex items-center gap-1">
-                                   <button className="hover:text-red-500 hover:bg-gray-100 p-1 rounded"><ArrowUp size={16} /></button>
-                                   <span>{comment.upvotes}</span>
-                                   <button className="hover:text-blue-500 hover:bg-gray-100 p-1 rounded"><ArrowDown size={16} /></button>
+                                   <button className={`hover:bg-gray-100 p-1 rounded ${isAi ? 'hover:text-orange-600' : 'hover:text-red-500'}`}><ArrowUp size={16} /></button>
+                                   <span className={isAi ? 'text-orange-600' : ''}>{comment.upvotes}</span>
+                                   <button className={`hover:bg-gray-100 p-1 rounded ${isAi ? 'hover:text-orange-600' : 'hover:text-blue-500'}`}><ArrowDown size={16} /></button>
                                 </div>
                                 <button className="hover:bg-gray-100 p-1 rounded px-2 flex items-center gap-1">
                                    <MessageSquare size={14} /> 回复
@@ -281,7 +339,7 @@ export const PostDetail: React.FC<PostDetailProps> = ({ post, onBack, isLoggedIn
                           </div>
                        </div>
                     </div>
-                 ))}
+                 )})}
               </div>
            </div>
         </div>

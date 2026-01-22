@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, Plus, Menu, Zap, User, LogIn, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Search, Bell, Plus, Menu, Zap, User, LogIn, ChevronDown, LogOut, Settings, Sparkles, Flame } from 'lucide-react';
 import { Button } from './Button';
 import { askGemini } from '../services/gemini';
 import { Logo } from './Logo';
@@ -27,6 +27,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [searchMode, setSearchMode] = useState<'normal' | 'ai'>('normal'); 
+  const inputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -48,11 +50,27 @@ export const Navbar: React.FC<NavbarProps> = ({
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    setIsSearching(true);
-    setAiResponse(null);
-    const result = await askGemini(searchQuery);
-    setAiResponse(result);
-    setIsSearching(false);
+    if (searchMode === 'ai') {
+        setIsSearching(true);
+        setAiResponse(null);
+        const result = await askGemini(searchQuery);
+        setAiResponse(result);
+        setIsSearching(false);
+    } else {
+        // Mock normal search
+        alert(`正在搜索: ${searchQuery} (模拟)`);
+    }
+  };
+
+  const activateAiMode = () => {
+      setSearchMode('ai');
+      setAiResponse(null);
+      setTimeout(() => inputRef.current?.focus(), 100);
+  };
+
+  const toggleSearchMode = () => {
+      setSearchMode(prev => prev === 'normal' ? 'ai' : 'normal');
+      setAiResponse(null);
   };
 
   return (
@@ -77,36 +95,66 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Center: Search */}
       <div className="flex-1 max-w-2xl px-4 lg:px-12 relative group">
-        <form onSubmit={handleSearch} className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-broad-500 transition-colors">
-            <Search size={18} strokeWidth={1.5} />
+        <form onSubmit={handleSearch} className="relative transition-all duration-300">
+          {/* Left Icon (Search or Fire) */}
+          <div 
+             className="absolute left-1.5 top-1/2 -translate-y-1/2 cursor-pointer p-1.5 rounded-full hover:bg-gray-100 transition-colors z-10"
+             onClick={toggleSearchMode}
+             title={searchMode === 'ai' ? "切换回普通搜索" : "切换到火妙AI搜索"}
+          >
+             {searchMode === 'ai' ? (
+                <div className="text-orange-500 animate-pulse">
+                   <Flame size={18} fill="currentColor" />
+                </div>
+             ) : (
+                <Search size={18} strokeWidth={1.5} className="text-gray-400" />
+             )}
           </div>
+          
           <input 
+            ref={inputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索 BROADFORUM..."
-            className="w-full h-10 pl-11 pr-16 bg-gray-50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus:bg-white focus:border-broad-500 focus:outline-none transition-all text-sm focus:shadow-sm placeholder-gray-400"
+            placeholder={searchMode === 'ai' ? "问问火妙AI..." : "搜索 BROADFORUM..."}
+            className={`w-full h-10 pl-11 pr-[140px] bg-gray-50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus:bg-white focus:outline-none transition-all text-sm focus:shadow-sm placeholder-gray-400 ${searchMode === 'ai' ? 'focus:border-orange-400 ring-1 ring-transparent focus:ring-orange-100' : 'focus:border-broad-500'}`}
           />
-          {searchQuery && (
-             <button 
-                type="submit"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-xs bg-broad-600 text-white px-3 py-1.5 rounded-full hover:bg-broad-700 font-medium transition-colors"
-                disabled={isSearching}
-             >
-               {isSearching ? '...' : 'AI 搜索'}
-             </button>
-          )}
+
+          {/* Right Action Button */}
+          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+            {searchMode === 'ai' ? (
+                 <button 
+                    type="submit"
+                    className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1.5 rounded-full hover:shadow-md hover:from-orange-600 hover:to-red-600 font-bold transition-all flex items-center gap-1 disabled:opacity-70"
+                    disabled={isSearching || !searchQuery}
+                 >
+                   {isSearching ? '思考中...' : (
+                       <>
+                         <Sparkles size={12} fill="currentColor" /> 提问
+                       </>
+                   )}
+                 </button>
+            ) : (
+                 <button 
+                    type="button"
+                    onClick={activateAiMode}
+                    className="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-full hover:bg-orange-100 hover:border-orange-300 font-bold transition-all flex items-center gap-1.5 group/btn"
+                 >
+                   <Flame size={12} className="group-hover/btn:scale-110 transition-transform" />
+                   Ask 火妙AI
+                 </button>
+            )}
+          </div>
         </form>
 
         {/* AI Response Dropdown */}
         {aiResponse && (
           <div className="absolute top-full left-4 right-4 lg:left-12 lg:right-12 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-5 z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5">
-            <div className="flex items-center gap-2 mb-3 text-broad-600 font-bold text-sm uppercase tracking-wide">
-              <Zap size={16} strokeWidth={1.5} className="animate-pulse" />
-              Broad AI 智能回答
+            <div className="flex items-center gap-2 mb-3 text-orange-600 font-bold text-sm uppercase tracking-wide">
+              <Sparkles size={16} strokeWidth={1.5} className="animate-pulse" />
+              火妙AI 智能回答
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed bg-blue-50/50 p-4 rounded-lg border border-blue-100/50">{aiResponse}</p>
+            <p className="text-sm text-gray-700 leading-relaxed bg-orange-50/30 p-4 rounded-lg border border-orange-100/50 whitespace-pre-wrap">{aiResponse}</p>
             <div className="mt-3 text-right">
               <button 
                 onClick={() => setAiResponse(null)}
