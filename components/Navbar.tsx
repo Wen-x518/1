@@ -12,6 +12,7 @@ interface NavbarProps {
   onLogout: () => void;
   onNavigateToSettings: () => void;
   onNavigateHome: () => void;
+  onToggleMobileMenu?: () => void; // New prop for mobile menu
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -21,7 +22,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreatePost, 
   onLogout, 
   onNavigateToSettings,
-  onNavigateHome
+  onNavigateHome,
+  onToggleMobileMenu
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -77,7 +79,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="fixed top-0 left-0 right-0 z-50 h-[64px] bg-white/90 backdrop-blur-md border-b border-gray-100/80 flex items-center px-4 justify-between transition-shadow duration-200">
       {/* Left: Logo */}
       <div className="flex items-center gap-2 lg:gap-3">
-        <button className="lg:hidden p-2 hover:bg-gray-50 rounded-full text-gray-600 transition-colors">
+        <button 
+          className="lg:hidden p-2 hover:bg-gray-50 rounded-full text-gray-600 transition-colors"
+          onClick={onToggleMobileMenu}
+        >
           <Menu size={22} strokeWidth={1.5} />
         </button>
         <a 
@@ -94,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Center: Search */}
-      <div className="flex-1 max-w-2xl px-4 lg:px-12 relative group">
+      <div className="flex-1 max-w-2xl px-2 sm:px-4 lg:px-12 relative group">
         <form onSubmit={handleSearch} className="relative transition-all duration-300">
           {/* Left Icon (Search or Fire) */}
           <div 
@@ -117,11 +122,25 @@ export const Navbar: React.FC<NavbarProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={searchMode === 'ai' ? "问问火妙AI..." : "搜索 BROADFORUM..."}
-            className={`w-full h-10 pl-11 pr-[140px] bg-gray-50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus:bg-white focus:outline-none transition-all text-sm focus:shadow-sm placeholder-gray-400 ${searchMode === 'ai' ? 'focus:border-orange-400 ring-1 ring-transparent focus:ring-orange-100' : 'focus:border-broad-500'}`}
+            className={`w-full h-10 pl-11 pr-[40px] sm:pr-[140px] bg-gray-50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus:bg-white focus:outline-none transition-all text-sm focus:shadow-sm placeholder-gray-400 ${searchMode === 'ai' ? 'focus:border-orange-400 ring-1 ring-transparent focus:ring-orange-100' : 'focus:border-broad-500'}`}
           />
+          
+          {/* Close AI Button for Mobile/Desktop */}
+           {searchMode === 'ai' && (
+              <div 
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 cursor-pointer hover:bg-gray-300 sm:right-[100px]"
+                  onClick={() => {
+                      setSearchMode('normal');
+                      setAiResponse(null);
+                  }}
+                  title="退出 AI 模式"
+              >
+                  <span className="text-xs font-bold">X</span>
+              </div>
+          )}
 
-          {/* Right Action Button */}
-          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center">
+          {/* Right Action Button (Desktop Only) */}
+          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center hidden sm:flex">
             {searchMode === 'ai' ? (
                  <button 
                     type="submit"
@@ -149,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* AI Response Dropdown */}
         {aiResponse && (
-          <div className="absolute top-full left-4 right-4 lg:left-12 lg:right-12 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-5 z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5">
+          <div className="absolute top-full left-2 right-2 sm:left-4 sm:right-4 lg:left-12 lg:right-12 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-5 z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5">
             <div className="flex items-center gap-2 mb-3 text-orange-600 font-bold text-sm uppercase tracking-wide">
               <Sparkles size={16} strokeWidth={1.5} className="animate-pulse" />
               火妙AI 智能回答
@@ -184,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Button 
               variant="secondary" 
               size="md" 
-              className="bg-gray-100 hover:bg-gray-200 text-gray-900 border-none font-bold"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-900 border-none font-bold whitespace-nowrap px-3 sm:px-4"
               onClick={onOpenLoginModal}
             >
               登录
@@ -200,16 +219,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </>
         ) : (
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-full relative transition-colors">
+            <button className="p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 rounded-full relative transition-colors hidden sm:block">
                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                <Bell size={22} strokeWidth={1.5} />
             </button>
             <button 
               onClick={onOpenCreatePost}
-              className="hidden sm:flex items-center justify-center gap-1.5 px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
+              className="flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-full transition-colors border border-transparent hover:border-gray-200"
             >
                <Plus size={22} strokeWidth={1.5} />
-               <span className="text-sm font-medium">发帖</span>
+               <span className="text-sm font-medium hidden sm:inline">发帖</span>
             </button>
             
             {/* User Profile Dropdown */}

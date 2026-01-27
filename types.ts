@@ -36,3 +36,13 @@ export interface Comment {
   upvotes: number;
   timeAgo: string;
 }
+
+export interface OpcApp {
+  id: string;
+  name: string;
+  type: 'official' | 'community';
+  url: string;
+  desc: string;
+  author?: string;
+  stars?: number;
+}

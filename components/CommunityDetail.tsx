@@ -26,35 +26,41 @@ export const CommunityDetail: React.FC<CommunityDetailProps> = ({
   return (
     <div className="animate-in fade-in duration-300">
       {/* Community Header / Banner */}
-      <div className="-mx-0 sm:-mx-6 -mt-6 mb-4">
-         {/* Banner Image (Gradient fallback) */}
-         <div className="h-24 sm:h-36 bg-gradient-to-r from-broad-600 to-blue-400 w-full"></div>
+      <div className="-mx-0 sm:-mx-6 -mt-6 mb-6 bg-white shadow-sm border-b border-gray-200">
+         {/* Banner Image */}
+         <div className="h-24 sm:h-[148px] bg-broad-600 w-full relative overflow-hidden group">
+             {/* Gradient Overlay for depth */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-50"></div>
+         </div>
          
-         {/* Header Info Bar */}
-         <div className="bg-white px-4 sm:px-6 pb-4">
-            <div className="max-w-[900px] mx-auto relative flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-8 sm:-mt-5">
-               {/* Icon */}
-               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full p-1 shadow-md shrink-0">
-                  <img src={community.icon} alt={community.name} className="w-full h-full rounded-full object-cover" />
+         {/* Header Content */}
+         <div className="px-4 sm:px-6 pb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 relative">
+               
+               {/* Avatar - overlapping banner */}
+               <div className="-mt-8 sm:-mt-10 relative z-10 shrink-0">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full p-1 shadow-md border-4 border-white overflow-hidden">
+                     <img src={community.icon} alt={community.name} className="w-full h-full rounded-full object-cover bg-white" />
+                  </div>
                </div>
                
-               {/* Title & Actions */}
-               <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between w-full gap-3">
-                  <div className="mb-1">
-                     <h1 className="text-2xl font-extrabold text-gray-900 leading-none">{community.name}</h1>
+               {/* Text Info & Actions */}
+               <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between w-full gap-4 pt-1 sm:pb-2 min-w-0">
+                  <div className="flex flex-col mb-1 sm:mb-0">
+                     <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight tracking-tight">{community.name}</h1>
                      <p className="text-sm text-gray-500 font-medium">r/{community.name}</p>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 w-full sm:w-auto mt-1 sm:mt-0">
                      <Button 
                        variant={isJoined ? "outline" : "primary"} 
-                       className={`rounded-full px-6 font-bold shadow-sm ${isJoined ? 'hover:text-red-600 hover:border-red-200 hover:bg-red-50' : 'bg-broad-600 hover:bg-broad-700'}`}
+                       className={`flex-1 sm:flex-none rounded-full px-8 font-bold shadow-sm transition-all h-9 ${isJoined ? 'border-gray-300 text-gray-700 hover:text-red-600 hover:border-red-200 hover:bg-red-50' : 'bg-broad-600 hover:bg-broad-700 text-white border-transparent'}`}
                        onClick={onToggleJoin}
                      >
-                       {isJoined ? '已加入' : '加入社区'}
+                       {isJoined ? '已加入' : '加入'}
                      </Button>
-                     <button className="p-2 border border-broad-600 text-broad-600 rounded-full hover:bg-broad-50 transition-colors">
-                        <Bell size={18} />
+                     <button className="w-9 h-9 flex items-center justify-center border border-gray-300 text-gray-600 rounded-full hover:bg-gray-50 transition-colors">
+                        <Bell size={18} strokeWidth={2} />
                      </button>
                   </div>
                </div>
@@ -82,7 +88,7 @@ export const CommunityDetail: React.FC<CommunityDetailProps> = ({
                      {/* Content */}
                      <div className="flex-1 min-w-0 flex flex-col justify-center h-[50px]">
                          <div className="flex items-center gap-2 mb-1">
-                             <span className="text-[10px] font-bold text-green-700 border border-green-200 bg-green-50 px-1.5 rounded-[4px] leading-none py-0.5">置顶</span>
+                             <span className="text-[10px] font-bold text-green-700 border border-green-200 bg-green-50 px-1.5 rounded-[4px] leading-none py-0.5 whitespace-nowrap">置顶</span>
                              <h3 className="text-sm font-bold text-gray-900 group-hover:text-broad-600 truncate leading-none">
                                 欢迎来到 r/{community.name}！新人必读指南 & 版规说明
                              </h3>
@@ -154,7 +160,7 @@ export const CommunityDetail: React.FC<CommunityDetailProps> = ({
                      </div>
                   </div>
 
-                  <Button className="w-full bg-broad-600 hover:bg-broad-700" onClick={onOpenCreatePost}>创建帖子</Button>
+                  <Button className="w-full bg-broad-600 hover:bg-broad-700 rounded-full font-bold" onClick={onOpenCreatePost}>创建帖子</Button>
                </div>
             </div>
 

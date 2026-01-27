@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Home, TrendingUp, HelpCircle, FileText, Briefcase, ChevronDown, ChevronUp, Users, Info, Cpu, Settings } from 'lucide-react';
+import { Home, TrendingUp, HelpCircle, FileText, Briefcase, ChevronDown, ChevronUp, Users, Info, Cpu, Settings, X, Box } from 'lucide-react';
 import { Community } from '../types';
+import { Button } from './Button';
 
 interface SidebarProps {
   currentView: 'home' | 'popular' | 'communities' | 'broad' | 'opc' | 'settings' | 'community_detail';
@@ -8,6 +9,8 @@ interface SidebarProps {
   isLoggedIn: boolean;
   myCommunities: Community[];
   onNavigateToCommunity: (community: Community) => void;
+  isOpen?: boolean; // Mobile state
+  onClose?: () => void; // Mobile close
 }
 
 interface SidebarSectionProps {
@@ -62,75 +65,108 @@ const SidebarItem: React.FC<{
   </button>
 );
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isLoggedIn, myCommunities, onNavigateToCommunity }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  currentView, 
+  onNavigate, 
+  isLoggedIn, 
+  myCommunities, 
+  onNavigateToCommunity,
+  isOpen = false,
+  onClose
+}) => {
   return (
-    <nav className="w-64 flex-shrink-0 bg-white border-r border-gray-100 h-[calc(100vh-64px)] sticky top-[64px] overflow-y-auto hidden lg:block custom-scrollbar pt-4 select-none">
-      <div className="pb-2">
-        <SidebarItem 
-          icon={<Home size={20} strokeWidth={1.5} />} 
-          label="主页" 
-          active={currentView === 'home'} 
-          onClick={() => onNavigate('home')}
-        />
-        <SidebarItem 
-          icon={<TrendingUp size={20} strokeWidth={1.5} />} 
-          label="热门" 
-          active={currentView === 'popular'} 
-          onClick={() => onNavigate('popular')}
-        />
-        <SidebarItem 
-          icon={<Users size={20} strokeWidth={1.5} />} 
-          label="社区广场" 
-          active={currentView === 'communities'} 
-          onClick={() => onNavigate('communities')}
-        />
-      </div>
-
-      {/* Conditional Rendering: My Communities (Only when logged in) */}
-      {isLoggedIn && (
-        <SidebarSection title="我的社区">
-           <SidebarItem 
-              icon={<Settings size={20} strokeWidth={1.5} />} 
-              label="管理社区" 
-              onClick={() => {}}
-           />
-           {myCommunities.map(community => (
-             <SidebarItem 
-                key={community.id}
-                icon={<img src={community.icon} className="w-5 h-5 rounded-full object-cover" alt="" />} 
-                label={community.name} 
-                onClick={() => onNavigateToCommunity(community)}
-             />
-           ))}
-           {myCommunities.length === 0 && (
-             <div className="px-4 py-2 text-xs text-gray-400 italic">暂未加入任何社区</div>
-           )}
-        </SidebarSection>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden animate-in fade-in duration-200"
+          onClick={onClose}
+        ></div>
       )}
 
-      <SidebarSection title="主题板块">
-        {/* Active Custom Sections */}
-        {/* BROAD 视界 Removed as per request */}
-        
-        <SidebarItem 
-          icon={<Cpu size={20} strokeWidth={1.5} />} 
-          label="OPC 开放平台" 
-          active={currentView === 'opc'} 
-          onClick={() => onNavigate('opc')} 
-        />
-      </SidebarSection>
+      {/* Sidebar Navigation */}
+      <nav className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex-shrink-0
+          transform transition-transform duration-300 ease-in-out lg:transform-none lg:transition-none
+          ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
+          lg:static lg:block lg:h-[calc(100vh-64px)] lg:sticky lg:top-[64px] lg:overflow-y-auto lg:z-0
+          flex flex-col
+          pt-0 lg:pt-4
+      `}>
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
+           <span className="font-bold text-gray-900">菜单</span>
+           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
+             <X size={20} />
+           </button>
+        </div>
 
-      <SidebarSection title="平台资源">
-        <SidebarItem icon={<Info size={18} strokeWidth={1.5} />} label="关于我们" comingSoon />
-        <SidebarItem icon={<HelpCircle size={18} strokeWidth={1.5} />} label="帮助中心" comingSoon />
-        <SidebarItem icon={<FileText size={18} strokeWidth={1.5} />} label="官方博客" comingSoon />
-        <SidebarItem icon={<Briefcase size={18} strokeWidth={1.5} />} label="加入我们" comingSoon />
-      </SidebarSection>
-      
-      <div className="px-4 py-8 text-xs text-gray-300">
-        <p>BROADFORUM © 2024.</p>
-        <p className="mt-1">汇聚多元视角，连接无限可能。</p>
-      </div>
-    </nav>
+        <div className="flex-1 overflow-y-auto custom-scrollbar pt-2 lg:pt-0">
+          <div className="pb-2">
+            <SidebarItem 
+              icon={<Home size={20} strokeWidth={1.5} />} 
+              label="主页" 
+              active={currentView === 'home'} 
+              onClick={() => onNavigate('home')}
+            />
+            <SidebarItem 
+              icon={<TrendingUp size={20} strokeWidth={1.5} />} 
+              label="热门" 
+              active={currentView === 'popular'} 
+              onClick={() => onNavigate('popular')}
+            />
+            <SidebarItem 
+              icon={<Users size={20} strokeWidth={1.5} />} 
+              label="社区广场" 
+              active={currentView === 'communities'} 
+              onClick={() => onNavigate('communities')}
+            />
+          </div>
+
+          <SidebarSection title="主题板块">
+             <SidebarItem 
+               icon={<Box size={20} strokeWidth={1.5} />} 
+               label="OPC 开放平台" 
+               active={currentView === 'opc'}
+               onClick={() => onNavigate('opc')}
+             />
+          </SidebarSection>
+
+          {/* Conditional Rendering: My Communities (Only when logged in) */}
+          {isLoggedIn && (
+            <SidebarSection title="我的社区">
+              <SidebarItem 
+                  icon={<Settings size={20} strokeWidth={1.5} />} 
+                  label="管理社区" 
+                  onClick={() => {}}
+              />
+              {myCommunities.map(community => (
+                <SidebarItem 
+                    key={community.id}
+                    icon={<img src={community.icon} className="w-5 h-5 rounded-full object-cover" alt="" />} 
+                    label={community.name} 
+                    onClick={() => onNavigateToCommunity(community)}
+                />
+              ))}
+              {myCommunities.length === 0 && (
+                <div className="px-4 py-2 text-xs text-gray-400 italic">暂未加入任何社区</div>
+              )}
+            </SidebarSection>
+          )}
+
+          <SidebarSection title="平台资源">
+            <SidebarItem icon={<Info size={18} strokeWidth={1.5} />} label="关于我们" comingSoon />
+            <SidebarItem icon={<HelpCircle size={18} strokeWidth={1.5} />} label="帮助中心" comingSoon />
+            <SidebarItem icon={<FileText size={18} strokeWidth={1.5} />} label="官方博客" comingSoon />
+            <SidebarItem icon={<Briefcase size={18} strokeWidth={1.5} />} label="加入我们" comingSoon />
+          </SidebarSection>
+        </div>
+        
+        <div className="px-4 py-6 text-xs text-gray-300 border-t border-gray-100 mt-auto bg-gray-50/30">
+          <p>BROADFORUM © 2024.</p>
+          <p className="mt-1">汇聚多元视角，连接无限可能。</p>
+        </div>
+      </nav>
+    </>
   );
 };

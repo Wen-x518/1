@@ -8,8 +8,9 @@ import { CommunityDetail } from './components/CommunityDetail';
 import { LoginModal } from './components/LoginModal';
 import { CreatePostModal } from './components/CreatePostModal';
 import { SettingsView } from './components/SettingsView';
-import { Post, Community } from './types';
-import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check, MailOpen } from 'lucide-react';
+import { UploadAppModal } from './components/UploadAppModal';
+import { Post, Community, OpcApp } from './types';
+import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check, MailOpen, Box, ExternalLink, ShieldCheck, User as UserIcon, Pencil, Trash2, ArrowLeft, Settings } from 'lucide-react';
 import { Button } from './components/Button';
 
 // Mock Data: Home Feed
@@ -39,18 +40,6 @@ const HOME_POSTS: Post[] = [
     comments: 2734,
     isJoined: false
   },
-  {
-    id: '4',
-    subreddit: 'OPC',
-    subredditIcon: 'https://picsum.photos/40/40?random=103',
-    author: 'DevOps_Master',
-    timeAgo: '1小时前',
-    title: '发布 OPC UA 协议的新版网关适配器',
-    content: '修复了在断网重连时的丢包问题，并优化了多线程数据采集的性能。欢迎社区测试并反馈。我们特别增强了边缘端的缓存机制，确保数据在网络抖动时零丢失。',
-    upvotes: 450,
-    comments: 89,
-    isJoined: true
-  }
 ];
 
 // Mock Data: Popular Feed
@@ -83,11 +72,10 @@ const POPULAR_POSTS: Post[] = [
   },
 ];
 
-// Updated Mock Data: Specific Communities requested by user
+// Updated Mock Data: Specific Communities
 const COMMUNITIES_DATA: Community[] = [
   { id: 'c1', name: '能源', desc: '聚焦清洁能源、分布式能源及能源管理系统。', members: '12.5k', icon: 'https://picsum.photos/60/60?random=101' },
   { id: 'c2', name: '空调', desc: '暖通空调技术、非电空调与节能温控方案讨论。', members: '8.2k', icon: 'https://picsum.photos/60/60?random=102' },
-  { id: 'c3', name: 'OPC', desc: '工业互联、开放平台通信与边缘计算技术。', members: '15k', icon: 'https://picsum.photos/60/60?random=103' },
   { id: 'c4', name: '活楼', desc: '工厂化建筑、不锈钢芯板结构与未来居住形态。', members: '9.8k', icon: 'https://picsum.photos/60/60?random=104' },
   { id: 'c5', name: '空气', desc: '室内空气品质、新风系统与洁净技术研究。', members: '11k', icon: 'https://picsum.photos/60/60?random=105' },
   { id: 'c6', name: '酒店运营', desc: '智能化酒店管理、客户体验与绿色运营模式。', members: '5.4k', icon: 'https://picsum.photos/60/60?random=106' },
@@ -97,15 +85,6 @@ const COMMUNITIES_DATA: Community[] = [
   { id: 'c10', name: '再生资源', desc: '废旧物资回收、循环经济与环保再生技术。', members: '6.5k', icon: 'https://picsum.photos/60/60?random=110' },
   // Feedback Community Added
   { id: 'c11', name: '意见反馈', desc: '您的声音是我们进步的动力。欢迎在此反馈 Bug、提出建议。', members: '1.2k', icon: 'https://picsum.photos/60/60?random=999' },
-];
-
-// Mock Data: OPC Projects
-const OPC_PROJECTS = [
-  { id: 'o1', name: 'Edge Server X1', type: 'hardware', status: '进行中', desc: '专为边缘计算设计的低功耗服务器蓝图，支持 5G 模组。', stars: 230, forks: 45, icon: <Server size={20} className="text-gray-600" /> },
-  { id: 'o2', name: 'LlamaTune', type: 'ai', status: '已发布', desc: '基于 Llama 架构的特定领域微调模型权重，针对金融数据优化。', stars: 1205, forks: 340, icon: <Cpu size={20} className="text-gray-600" /> },
-  { id: 'o3', name: 'Liquid Cooling Mod', type: 'hardware', status: '审核中', desc: '高效能数据中心液冷改造套件，降低 PUE 至 1.05。', stars: 89, forks: 12, icon: <Flame size={20} className="text-gray-600" /> },
-  { id: 'o4', name: 'Broad OS Kernel', type: 'software', status: '进行中', desc: '针对 Broad 硬件优化的轻量级操作系统内核，实时性增强。', stars: 567, forks: 89, icon: <FileCode size={20} className="text-gray-600" /> },
-  { id: 'o5', name: 'Vision API SDK', type: 'software', status: '已发布', desc: '通用视觉识别接口的 Python 封装库。', stars: 330, forks: 67, icon: <Activity size={20} className="text-gray-600" /> },
 ];
 
 const FilterButton: React.FC<{ active?: boolean; icon?: React.ReactNode; label: string; onClick?: () => void }> = ({ active, icon, label, onClick }) => (
@@ -118,18 +97,29 @@ const FilterButton: React.FC<{ active?: boolean; icon?: React.ReactNode; label: 
   </button>
 );
 
-type ViewMode = 'home' | 'popular' | 'communities' | 'broad' | 'opc' | 'post_detail' | 'settings' | 'community_detail';
+type ViewMode = 'home' | 'popular' | 'communities' | 'broad' | 'opc' | 'manage_apps' | 'post_detail' | 'settings' | 'community_detail';
 
 const App: React.FC = () => {
   const [cardViewMode, setCardViewMode] = useState<'card' | 'compact'>('card');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
+  const [createPostDefaultId, setCreatePostDefaultId] = useState<string | undefined>(undefined);
   const [currentView, setCurrentView] = useState<ViewMode>('home');
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
-  const [opcCategory, setOpcCategory] = useState<'all' | 'hardware' | 'software' | 'ai'>('all');
   
+  // OPC State
+  const [opcApps, setOpcApps] = useState<OpcApp[]>([
+      { id: '1', name: 'B-Core Design Tool', type: 'official', url: 'https://example.com/bcore', desc: '官方提供的芯板结构设计辅助工具，支持在线计算载荷。', stars: 1200 },
+      { id: '2', name: 'Broad Link', type: 'official', url: 'https://example.com/link', desc: '设备互联调试助手，支持 Modbus/TCP 协议测试。', stars: 850 },
+      { id: '3', name: 'Energy V', type: 'community', url: 'https://example.com/energyv', desc: '由社区开发者上传的简易能耗可视化看板，适用于小型项目。', stars: 45, author: 'Dev_Lee' },
+  ]);
+  const [opcCategory, setOpcCategory] = useState<'all' | 'official' | 'community'>('all');
+  const [isUploadAppModalOpen, setIsUploadAppModalOpen] = useState(false);
+  const [editingApp, setEditingApp] = useState<OpcApp | null>(null);
+
   // User State
   const [currentUser, setCurrentUser] = useState({
     displayName: 'User_99',
@@ -150,6 +140,7 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     setJoinedCommunities([]);
     setCurrentView('home'); 
+    setIsMobileMenuOpen(false);
   };
 
   const handleUpdateUser = (updatedUser: typeof currentUser) => {
@@ -179,15 +170,56 @@ const App: React.FC = () => {
   const handleNavigateToCommunity = (community: Community) => {
     setSelectedCommunity(community);
     setCurrentView('community_detail');
+    setIsMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
   const handleNavigate = (view: ViewMode) => {
     setCurrentView(view);
+    setIsMobileMenuOpen(false);
     if (view !== 'post_detail') {
       setSelectedPost(null);
     }
     window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  // Handles both Creation and Update
+  const handleSaveApp = (name: string, url: string, desc: string) => {
+      if (editingApp) {
+          // Update
+          setOpcApps(prev => prev.map(app => 
+              app.id === editingApp.id 
+                  ? { ...app, name, url, desc } 
+                  : app
+          ));
+      } else {
+          // Create
+          const newApp: OpcApp = {
+              id: Date.now().toString(),
+              name,
+              url,
+              desc: desc || '用户上传的应用',
+              type: 'community',
+              stars: 0,
+              author: currentUser.displayName
+          };
+          setOpcApps([newApp, ...opcApps]);
+      }
+      // Reset is handled by modal close logic implicitly, but let's be safe
+      setEditingApp(null);
+  };
+
+  const handleDeleteApp = (appId: string, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      if (window.confirm('确定要删除这个应用吗？此操作无法撤销。')) {
+          setOpcApps(prev => prev.filter(app => app.id !== appId));
+      }
+  };
+
+  const handleEditApp = (app: OpcApp, e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      setEditingApp(app);
+      setIsUploadAppModalOpen(true);
   };
 
   const renderContent = () => {
@@ -252,86 +284,228 @@ const App: React.FC = () => {
 
     // --- OPC VIEW ---
     if (currentView === 'opc') {
-       const filteredProjects = opcCategory === 'all' 
-          ? OPC_PROJECTS 
-          : OPC_PROJECTS.filter(p => p.type === opcCategory);
+       const filteredApps = opcCategory === 'all' ? opcApps : opcApps.filter(app => app.type === opcCategory);
 
        return (
-        <div className="animate-in fade-in duration-300 pb-10">
-           {/* Header */}
-           <div className="flex flex-col gap-6 mb-8 border-b border-gray-100 pb-8">
-              <div className="flex items-center justify-between">
-                 <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3 tracking-tight">
-                   <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center">
-                     <Cpu size={24} strokeWidth={2} />
-                   </div>
-                   OPC 开放平台
-                 </h2>
-                 <Button 
-                    variant="primary" 
-                    className="bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-200 border-none"
-                    onClick={() => isLoggedIn ? alert('上传界面') : setIsLoginModalOpen(true)}
-                 >
-                    <UploadCloud size={18} className="mr-2" />
-                    发布项目
-                 </Button>
+         <div className="animate-in fade-in duration-300 pb-10">
+            {/* Header */}
+            <div className="flex flex-col gap-6 mb-8 border-b border-gray-100 pb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                 <div>
+                    <h2 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3 tracking-tight">
+                        <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center shadow-lg shadow-gray-200">
+                           <Box size={24} strokeWidth={2} />
+                        </div>
+                        OPC 开放平台
+                    </h2>
+                    <p className="text-gray-500 mt-2 max-w-xl text-base leading-relaxed">
+                        汇聚官方与社区开发的实用工具。在这里发现能提升效率的应用，或分享您的作品。
+                    </p>
+                 </div>
+                 <div className="flex gap-3 shrink-0">
+                    <Button 
+                        variant="secondary" 
+                        className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm px-4 py-2.5 rounded-full"
+                        onClick={() => {
+                            if (isLoggedIn) {
+                                setCurrentView('manage_apps');
+                            } else {
+                                setIsLoginModalOpen(true);
+                            }
+                        }}
+                    >
+                        <Settings size={18} className="mr-2" />
+                        管理我的应用
+                    </Button>
+                    <Button 
+                        variant="primary" 
+                        className="bg-gray-900 text-white hover:bg-gray-800 shadow-lg shadow-gray-200 border-none px-6 py-2.5 rounded-full"
+                        onClick={() => {
+                            if (isLoggedIn) {
+                                setEditingApp(null);
+                                setIsUploadAppModalOpen(true);
+                            } else {
+                                setIsLoginModalOpen(true);
+                            }
+                        }}
+                    >
+                        <UploadCloud size={18} className="mr-2" />
+                        上传应用
+                    </Button>
+                 </div>
               </div>
-              <p className="text-gray-500 max-w-2xl text-base leading-relaxed">
-                 共建开放计算未来。浏览、复刻并贡献最新的硬件设计、AI 模型与系统架构。
-              </p>
               
               {/* Category Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                 <FilterButton label="全部项目" active={opcCategory === 'all'} onClick={() => setOpcCategory('all')} />
-                 <FilterButton label="硬件架构" active={opcCategory === 'hardware'} onClick={() => setOpcCategory('hardware')} icon={<Server size={16} />} />
-                 <FilterButton label="AI 模型" active={opcCategory === 'ai'} onClick={() => setOpcCategory('ai')} icon={<Cpu size={16} />} />
-                 <FilterButton label="系统软件" active={opcCategory === 'software'} onClick={() => setOpcCategory('software')} icon={<FileCode size={16} />} />
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-2">
+                 <FilterButton label="全部应用" active={opcCategory === 'all'} onClick={() => setOpcCategory('all')} />
+                 <FilterButton label="官方应用" active={opcCategory === 'official'} onClick={() => setOpcCategory('official')} icon={<ShieldCheck size={16} />} />
+                 <FilterButton label="社区贡献" active={opcCategory === 'community'} onClick={() => setOpcCategory('community')} icon={<Users size={16} />} />
               </div>
-           </div>
+            </div>
 
-           {/* Projects Grid */}
-           <div className="grid grid-cols-1 gap-4">
-              {filteredProjects.map(proj => (
-                 <div key={proj.id} className="bg-white border border-gray-100 rounded-xl p-5 hover:border-broad-300 hover:shadow-md transition-all group cursor-pointer flex flex-col sm:flex-row gap-5">
-                    {/* Icon/Thumbnail Area */}
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100 flex-shrink-0 group-hover:scale-105 transition-transform">
-                       {React.cloneElement(proj.icon as React.ReactElement, { size: 28, className: "text-gray-700" })}
+            {/* Apps Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               {filteredApps.map(app => (
+                 <div key={app.id} className="relative bg-white border border-gray-100 rounded-xl p-5 hover:border-broad-300 hover:shadow-md transition-all group flex flex-col justify-between h-full">
+                    <div>
+                        <div className="flex items-start justify-between mb-3">
+                           <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-700 shrink-0">
+                               {app.type === 'official' ? <Box size={24} /> : <Cpu size={24} />}
+                           </div>
+                           <div className={`text-[10px] font-bold px-2 py-0.5 rounded border ${app.type === 'official' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
+                              {app.type === 'official' ? 'OFFICIAL' : 'COMMUNITY'}
+                           </div>
+                        </div>
+                        <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-broad-600 transition-colors line-clamp-1 pr-1">{app.name}</h3>
+                        <p className="text-sm text-gray-500 mb-4 line-clamp-2 min-h-[40px] leading-relaxed">
+                           {app.desc}
+                        </p>
                     </div>
-
-                    {/* Content Area */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                       <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-bold text-lg text-gray-900 group-hover:text-broad-600 transition-colors truncate pr-4">{proj.name}</h4>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border whitespace-nowrap ${proj.status === '已发布' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
-                             {proj.status}
-                          </span>
-                       </div>
-                       <p className="text-sm text-gray-500 mb-3 line-clamp-2">{proj.desc}</p>
-                       
-                       {/* Meta Info */}
-                       <div className="flex items-center gap-4 text-xs text-gray-400 font-medium">
-                          <span className="flex items-center gap-1 hover:text-gray-600 transition-colors"><Star size={14} /> {proj.stars}</span>
-                          <span className="flex items-center gap-1 hover:text-gray-600 transition-colors"><GitFork size={14} /> {proj.forks}</span>
-                          <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500 uppercase tracking-wide text-[10px]">{proj.type}</span>
-                       </div>
-                    </div>
-
-                    {/* Action Arrow (Desktop) */}
-                    <div className="hidden sm:flex items-center justify-end text-gray-300 group-hover:text-broad-500 transition-colors pl-2 border-l border-gray-50">
-                       <ChevronRight size={24} />
+                    
+                    <div>
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-2">
+                            {app.type === 'community' && app.author ? (
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                   <UserIcon size={12} />
+                                   <span>{app.author}</span>
+                                </div>
+                            ) : (
+                                <div className="text-xs text-gray-400 italic">Broad Official</div>
+                            )}
+                            <a 
+                              href={app.url} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-xs font-bold bg-gray-100 hover:bg-broad-600 hover:text-white text-gray-700 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
+                            >
+                               打开 <ExternalLink size={12} />
+                            </a>
+                        </div>
                     </div>
                  </div>
-              ))}
-           </div>
-        </div>
+               ))}
+               
+               {filteredApps.length === 0 && (
+                   <div className="col-span-full py-12 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      <p>暂无相关应用</p>
+                   </div>
+               )}
+            </div>
+         </div>
        );
+    }
+
+    // --- MANAGE APPS VIEW ---
+    if (currentView === 'manage_apps') {
+        const myApps = opcApps.filter(app => app.author === currentUser.displayName || app.type === 'official' /* Show official as demo for simplicity if user is admin mock */).filter(app => app.type === 'community');
+
+        return (
+            <div className="animate-in fade-in duration-300 pb-10">
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                         <button 
+                            onClick={() => setCurrentView('opc')}
+                            className="flex items-center gap-1 text-gray-500 hover:text-gray-900 mb-2 transition-colors"
+                        >
+                            <ArrowLeft size={16} /> 返回广场
+                        </button>
+                        <h2 className="text-2xl font-extrabold text-gray-900">应用管理控制台</h2>
+                        <p className="text-gray-500 text-sm mt-1">查看、编辑或下架您发布的应用。</p>
+                    </div>
+                    <Button 
+                        variant="primary" 
+                        className="bg-broad-600 hover:bg-broad-700 text-white shadow-md rounded-full"
+                        onClick={() => {
+                            setEditingApp(null);
+                            setIsUploadAppModalOpen(true);
+                        }}
+                    >
+                        <UploadCloud size={18} className="mr-2" />
+                        发布新应用
+                    </Button>
+                </div>
+
+                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    {myApps.length > 0 ? (
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th className="px-6 py-4 font-bold text-gray-900">应用名称</th>
+                                    <th className="px-6 py-4 font-bold text-gray-900">状态</th>
+                                    <th className="px-6 py-4 font-bold text-gray-900">链接</th>
+                                    <th className="px-6 py-4 font-bold text-gray-900 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {myApps.map(app => (
+                                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                                                    <Cpu size={16} />
+                                                </div>
+                                                <span className="font-bold text-gray-900">{app.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                                已发布
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 max-w-[200px] truncate">
+                                            {app.url}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button 
+                                                    onClick={() => handleEditApp(app)}
+                                                    className="p-2 text-gray-500 hover:text-broad-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                                    title="编辑信息"
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteApp(app.id)}
+                                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                                                    title="删除应用"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <div className="p-12 text-center">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                                <Cpu size={32} />
+                            </div>
+                            <h3 className="text-gray-900 font-bold mb-1">暂无发布的应用</h3>
+                            <p className="text-gray-500 text-sm mb-6">您还没有上传任何应用到 OPC 平台。</p>
+                            <Button 
+                                variant="outline"
+                                onClick={() => {
+                                    setEditingApp(null);
+                                    setIsUploadAppModalOpen(true);
+                                }}
+                            >
+                                立即发布
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
     }
 
     // --- COMMUNITIES VIEW ---
     if (currentView === 'communities') {
       return (
         <div className="animate-in fade-in duration-300">
-           {/* New Feedback Collection Section */}
+           {/* Feedback Collection Section */}
            <div className="mb-8">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group">
                  {/* Decorative background circle */}
@@ -351,11 +525,20 @@ const App: React.FC = () => {
                  
                  <div className="relative z-10 shrink-0">
                     <Button 
+                       variant="secondary"
                        className="bg-white text-broad-600 hover:bg-white/80 border border-broad-200 hover:border-broad-300 shadow-sm px-6"
                        onClick={() => {
-                         // Find the feedback community and navigate to it
+                         // Find the feedback community
                          const feedbackComm = COMMUNITIES_DATA.find(c => c.name === '意见反馈');
-                         if (feedbackComm) handleNavigateToCommunity(feedbackComm);
+                         if (feedbackComm) {
+                             if (!isLoggedIn) {
+                                 setIsLoginModalOpen(true);
+                                 return;
+                             }
+                             // Open create post modal with Feedback community selected
+                             setCreatePostDefaultId(feedbackComm.id);
+                             setIsCreatePostModalOpen(true);
+                         }
                        }}
                     >
                        去反馈
@@ -369,7 +552,7 @@ const App: React.FC = () => {
               <Users size={24} className="text-broad-600" />
               发现社区
             </h2>
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <input type="text" placeholder="查找社区..." className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-broad-400 w-48 transition-all" />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             </div>
@@ -414,13 +597,13 @@ const App: React.FC = () => {
       <>
         {/* Filter Bar */}
         <div className="mb-4 flex items-center justify-between px-1">
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar pb-1">
             <FilterButton active={currentView === 'popular'} icon={currentView === 'popular' ? <Flame size={18} strokeWidth={1.5} /> : <Rocket size={18} strokeWidth={1.5} />} label={currentView === 'popular' ? "高热度" : "最佳"} onClick={() => setCurrentView('popular')} />
             <FilterButton icon={currentView === 'popular' ? <Rocket size={18} strokeWidth={1.5} /> : <Flame size={18} strokeWidth={1.5} />} label={currentView === 'popular' ? "上升中" : "热门"} onClick={() => setCurrentView('home')} />
             <FilterButton icon={<Clock size={18} strokeWidth={1.5} />} label="最新" onClick={() => setCurrentView('home')} />
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
               <button 
                 onClick={() => setCardViewMode('card')} 
                 className={`p-2 rounded hover:bg-gray-100 transition-colors ${cardViewMode === 'card' ? 'text-broad-600 bg-gray-50' : 'text-gray-400'}`}
@@ -475,6 +658,7 @@ const App: React.FC = () => {
         onLogout={handleLogout}
         onNavigateToSettings={() => handleNavigate('settings')}
         onNavigateHome={() => handleNavigate('home')}
+        onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
       
       <LoginModal 
@@ -485,23 +669,38 @@ const App: React.FC = () => {
 
       <CreatePostModal 
         isOpen={isCreatePostModalOpen}
-        onClose={() => setIsCreatePostModalOpen(false)}
+        onClose={() => {
+            setIsCreatePostModalOpen(false);
+            setCreatePostDefaultId(undefined); // Reset
+        }}
         communities={COMMUNITIES_DATA}
-        defaultCommunityId={currentView === 'community_detail' && selectedCommunity ? selectedCommunity.id : undefined}
+        defaultCommunityId={createPostDefaultId || (currentView === 'community_detail' && selectedCommunity ? selectedCommunity.id : undefined)}
+      />
+
+      <UploadAppModal 
+        isOpen={isUploadAppModalOpen}
+        onClose={() => {
+            setIsUploadAppModalOpen(false);
+            setEditingApp(null);
+        }}
+        onSubmit={handleSaveApp}
+        initialData={editingApp ? { name: editingApp.name, url: editingApp.url, desc: editingApp.desc } : undefined}
       />
 
       <div className="flex justify-center max-w-[1600px] mx-auto pt-[64px]">
-        {/* Left Sidebar - Pass props for logic */}
+        {/* Sidebar with Mobile Support */}
         <Sidebar 
           currentView={currentView as any} 
           onNavigate={(view) => handleNavigate(view)} 
           isLoggedIn={isLoggedIn}
           myCommunities={joinedCommunities}
           onNavigateToCommunity={handleNavigateToCommunity}
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
         />
 
         {/* Main Content */}
-        <main className="flex-1 w-full max-w-[900px] px-0 sm:px-6 py-6 min-w-0 border-x border-gray-100/50">
+        <main className="flex-1 w-full max-w-[900px] px-0 sm:px-6 py-6 min-w-0 border-x-0 sm:border-x border-gray-100/50">
           {renderContent()}
         </main>
 
