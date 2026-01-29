@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Mail, Lock, Bell, Shield, Save, Camera, Check } from 'lucide-react';
+import { User, Mail, Lock, Bell, Shield, Save, Camera, Check, Grid, X } from 'lucide-react';
 import { Button } from './Button';
 
 interface UserProfile {
@@ -14,6 +14,23 @@ interface SettingsViewProps {
   onSave: (user: UserProfile) => void;
 }
 
+// Curated list of avatars with consistent BroadForum theme colors
+const OFFICIAL_AVATARS = [
+  // Bots (Tech/OPC Vibe) - Blue/Cool backgrounds
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Broad1&backgroundColor=e0f2fe",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Broad2&backgroundColor=bae6fd",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Broad3&backgroundColor=f3f4f6",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Broad4&backgroundColor=e0e7ff",
+  "https://api.dicebear.com/7.x/bottts/svg?seed=Broad5&backgroundColor=dbeafe",
+  
+  // People (Community Vibe) - Warm/Neutral backgrounds
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=fef3c7",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=fee2e2",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack&backgroundColor=dcfce7",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Bella&backgroundColor=f3f4f6",
+  "https://api.dicebear.com/7.x/avataaars/svg?seed=Leo&backgroundColor=ffedd5",
+];
+
 export const SettingsView: React.FC<SettingsViewProps> = ({ user, onSave }) => {
   const [displayName, setDisplayName] = useState(user.displayName);
   const [bio, setBio] = useState(user.bio);
@@ -22,6 +39,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user, onSave }) => {
   const [emailNotif, setEmailNotif] = useState(true);
   const [pushNotif, setPushNotif] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,9 +56,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user, onSave }) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
+        setShowAvatarSelector(false);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSelectOfficialAvatar = (url: string) => {
+    setAvatar(url);
+    // Don't close immediately to allow user to try different ones, 
+    // or close if you prefer instant selection behavior.
   };
 
   const handleSave = () => {
@@ -70,20 +95,55 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user, onSave }) => {
              <User size={20} className="text-broad-600" /> 个人资料
            </h2>
            
-           <div className="flex flex-col sm:flex-row gap-6 mb-6 items-start">
-              <div 
-                className="relative group cursor-pointer shrink-0"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                 <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden border-2 border-white shadow-md">
-                    <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                 </div>
-                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="text-white" size={24} />
-                 </div>
-                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+           <div className="flex flex-col sm:flex-row gap-8 mb-6 items-start">
+              {/* Avatar Column */}
+              <div className="flex flex-col items-center gap-3 shrink-0">
+                  <div 
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <div className="w-24 h-24 rounded-full bg-gray-50 overflow-hidden border-2 border-gray-100 shadow-sm group-hover:border-broad-300 transition-colors">
+                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="text-white" size={24} />
+                    </div>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                  </div>
+                  
+                  <div className="flex flex-col gap-2 w-full">
+                    <button 
+                       onClick={() => setShowAvatarSelector(!showAvatarSelector)}
+                       className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors flex items-center justify-center gap-1 ${showAvatarSelector ? 'bg-broad-50 text-broad-600 border-broad-200' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                    >
+                       {showAvatarSelector ? <X size={12} /> : <Grid size={12} />}
+                       {showAvatarSelector ? '关闭图库' : '官方头像'}
+                    </button>
+                  </div>
               </div>
+
+              {/* Form Column */}
               <div className="flex-1 space-y-4 w-full">
+                 {/* Avatar Selector Panel (Collapsible) */}
+                 {showAvatarSelector && (
+                   <div className="mb-4 bg-gray-50 rounded-xl p-4 border border-gray-100 animate-in slide-in-from-top-2 duration-200">
+                      <div className="flex justify-between items-center mb-3">
+                         <span className="text-xs font-bold text-gray-500">选择官方头像 (Broad Style)</span>
+                      </div>
+                      <div className="grid grid-cols-5 gap-3">
+                         {OFFICIAL_AVATARS.map((url, index) => (
+                           <div 
+                             key={index} 
+                             onClick={() => handleSelectOfficialAvatar(url)}
+                             className={`aspect-square rounded-full overflow-hidden cursor-pointer border-2 transition-all hover:scale-110 ${avatar === url ? 'border-broad-600 ring-2 ring-broad-100' : 'border-transparent hover:border-gray-300'}`}
+                           >
+                              <img src={url} className="w-full h-full object-cover bg-white" alt={`Avatar ${index}`} />
+                           </div>
+                         ))}
+                      </div>
+                   </div>
+                 )}
+
                  <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">显示名称</label>
                     <input 
@@ -170,6 +230,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ user, onSave }) => {
                 setDisplayName(user.displayName);
                 setBio(user.bio);
                 setAvatar(user.avatar);
+                setShowAvatarSelector(false);
               }}>取消</Button>
               <Button 
                 className={`px-8 transition-all rounded-full ${isSaved ? 'bg-green-600 hover:bg-green-700' : 'bg-broad-600 hover:bg-broad-700'} text-white shadow-md`} 

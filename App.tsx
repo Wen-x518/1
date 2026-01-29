@@ -9,8 +9,9 @@ import { LoginModal } from './components/LoginModal';
 import { CreatePostModal } from './components/CreatePostModal';
 import { SettingsView } from './components/SettingsView';
 import { UploadAppModal } from './components/UploadAppModal';
+import { AiChatView } from './components/AiChatView';
 import { Post, Community, OpcApp } from './types';
-import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check, MailOpen, Box, ExternalLink, ShieldCheck, User as UserIcon, Pencil, Trash2, ArrowLeft, Settings } from 'lucide-react';
+import { Rocket, Flame, Clock, Grid, LayoutList, Search, Users, Globe, MessageCircle, Cpu, UploadCloud, Folder, FileCode, Server, Star, GitFork, Activity, ChevronRight, Hash, MessageSquare, Check, MailOpen, Box, ExternalLink, ShieldCheck, User as UserIcon, Pencil, Trash2, ArrowLeft, Settings, Trophy } from 'lucide-react';
 import { Button } from './components/Button';
 
 // Mock Data: Home Feed
@@ -97,19 +98,26 @@ const FilterButton: React.FC<{ active?: boolean; icon?: React.ReactNode; label: 
   </button>
 );
 
-type ViewMode = 'home' | 'popular' | 'communities' | 'broad' | 'opc' | 'manage_apps' | 'post_detail' | 'settings' | 'community_detail';
+type ViewMode = 'home' | 'popular' | 'communities' | 'broad' | 'opc' | 'manage_apps' | 'post_detail' | 'settings' | 'community_detail' | 'ai_chat';
+type SortMode = 'best' | 'hot' | 'new' | 'top';
 
-const App: React.FC = () => {
+export const App: React.FC = () => {
   const [cardViewMode, setCardViewMode] = useState<'card' | 'compact'>('card');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
   const [createPostDefaultId, setCreatePostDefaultId] = useState<string | undefined>(undefined);
+  
   const [currentView, setCurrentView] = useState<ViewMode>('home');
+  const [sortMode, setSortMode] = useState<SortMode>('hot'); // Add sort state
+
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedCommunity, setSelectedCommunity] = useState<Community | null>(null);
   
+  // AI Chat State
+  const [aiInitialQuery, setAiInitialQuery] = useState<string | undefined>(undefined);
+
   // OPC State
   const [opcApps, setOpcApps] = useState<OpcApp[]>([
       { id: '1', name: 'B-Core Design Tool', type: 'official', url: 'https://example.com/bcore', desc: '官方提供的芯板结构设计辅助工具，支持在线计算载荷。', stars: 1200 },
@@ -176,11 +184,19 @@ const App: React.FC = () => {
 
   const handleNavigate = (view: ViewMode) => {
     setCurrentView(view);
+    // Reset sort when switching views for cleaner UX
+    setSortMode('hot');
     setIsMobileMenuOpen(false);
     if (view !== 'post_detail') {
       setSelectedPost(null);
     }
     window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  const handleNavigateToAiChat = (initialQuery?: string) => {
+      setAiInitialQuery(initialQuery);
+      setCurrentView('ai_chat');
+      setIsMobileMenuOpen(false);
   };
 
   // Handles both Creation and Update
@@ -231,6 +247,16 @@ const App: React.FC = () => {
           onSave={handleUpdateUser} 
         />
       );
+    }
+
+    // --- AI CHAT VIEW ---
+    if (currentView === 'ai_chat') {
+        return (
+            <AiChatView 
+                initialQuery={aiInitialQuery} 
+                currentUser={isLoggedIn ? currentUser : undefined} 
+            />
+        );
     }
 
     // --- POST DETAIL VIEW ---
@@ -590,129 +616,122 @@ const App: React.FC = () => {
       );
     }
 
-    // --- HOME / POPULAR VIEW ---
+    // --- HOME / POPULAR VIEW (Default Fallthrough) ---
     const postsToDisplay = currentView === 'popular' ? POPULAR_POSTS : HOME_POSTS;
 
     return (
-      <>
-        {/* Filter Bar */}
-        <div className="mb-4 flex items-center justify-between px-1">
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar pb-1">
-            <FilterButton active={currentView === 'popular'} icon={currentView === 'popular' ? <Flame size={18} strokeWidth={1.5} /> : <Rocket size={18} strokeWidth={1.5} />} label={currentView === 'popular' ? "高热度" : "最佳"} onClick={() => setCurrentView('popular')} />
-            <FilterButton icon={currentView === 'popular' ? <Rocket size={18} strokeWidth={1.5} /> : <Flame size={18} strokeWidth={1.5} />} label={currentView === 'popular' ? "上升中" : "热门"} onClick={() => setCurrentView('home')} />
-            <FilterButton icon={<Clock size={18} strokeWidth={1.5} />} label="最新" onClick={() => setCurrentView('home')} />
-          </div>
-          
-          <div className="hidden sm:flex items-center gap-2">
-              <button 
-                onClick={() => setCardViewMode('card')} 
-                className={`p-2 rounded hover:bg-gray-100 transition-colors ${cardViewMode === 'card' ? 'text-broad-600 bg-gray-50' : 'text-gray-400'}`}
-                title="Card View"
-              >
-                <Grid size={20} strokeWidth={1.5} />
-              </button>
-              <button 
-                onClick={() => setCardViewMode('compact')} 
-                className={`p-2 rounded hover:bg-gray-100 transition-colors ${cardViewMode === 'compact' ? 'text-broad-600 bg-gray-50' : 'text-gray-400'}`}
-                title="Compact View"
-              >
-                <LayoutList size={20} strokeWidth={1.5} />
-              </button>
-          </div>
+        <div className="animate-in fade-in duration-300">
+           {/* Filters */}
+           <div className="mb-4 flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+             <FilterButton label="最热" active={sortMode === 'hot'} onClick={() => setSortMode('hot')} icon={<Flame size={16} />} />
+             <FilterButton label="最新" active={sortMode === 'new'} onClick={() => setSortMode('new')} icon={<Clock size={16} />} />
+             <FilterButton label="上升" active={sortMode === 'top'} onClick={() => setSortMode('top')} icon={<Rocket size={16} />} />
+             
+             <div className="ml-auto flex items-center gap-2">
+                <button 
+                  onClick={() => setCardViewMode('card')}
+                  className={`p-2 rounded hover:bg-gray-100 ${cardViewMode === 'card' ? 'text-broad-600 bg-blue-50' : 'text-gray-400'}`}
+                >
+                    <Grid size={18} />
+                </button>
+                <button 
+                  onClick={() => setCardViewMode('compact')}
+                  className={`p-2 rounded hover:bg-gray-100 ${cardViewMode === 'compact' ? 'text-broad-600 bg-blue-50' : 'text-gray-400'}`}
+                >
+                    <LayoutList size={18} />
+                </button>
+             </div>
+           </div>
+           
+           {/* Posts */}
+           <div className="space-y-2 sm:space-y-4">
+               {postsToDisplay.map(post => (
+                   <PostCard 
+                      key={post.id} 
+                      post={post} 
+                      viewMode={cardViewMode}
+                      onClick={() => handleOpenPost(post)}
+                      onCommunityClick={(e) => {
+                          e.stopPropagation();
+                          const comm = COMMUNITIES_DATA.find(c => c.name === post.subreddit);
+                          if (comm) handleNavigateToCommunity(comm);
+                      }}
+                   />
+               ))}
+           </div>
         </div>
-
-        {/* Posts Feed */}
-        <div className={`space-y-0 divide-y divide-gray-100 border border-gray-100 rounded-lg overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ${cardViewMode === 'compact' ? 'bg-white' : ''}`}>
-            {postsToDisplay.map(post => (
-              <PostCard 
-                key={post.id} 
-                post={post} 
-                viewMode={cardViewMode}
-                onClick={() => handleOpenPost(post)} 
-                onCommunityClick={(e) => {
-                  e.stopPropagation();
-                  // Find community object by name
-                  const comm = COMMUNITIES_DATA.find(c => c.name === post.subreddit);
-                  if (comm) handleNavigateToCommunity(comm);
-                }}
-              />
-            ))}
-        </div>
-
-        {/* Loading Indicator */}
-        <div className="py-10 text-center text-broad-500 font-bold flex flex-col items-center gap-2">
-            <div className="w-8 h-8 border-[3px] border-gray-100 border-t-broad-500 rounded-full animate-spin"></div>
-            <span className="text-xs text-gray-400 font-normal">加载更多内容...</span>
-        </div>
-      </>
     );
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
-      <Navbar 
-        isLoggedIn={isLoggedIn} 
-        currentUser={currentUser}
-        onOpenLoginModal={() => setIsLoginModalOpen(true)} 
-        onOpenCreatePost={() => setIsCreatePostModalOpen(true)}
-        onLogout={handleLogout}
-        onNavigateToSettings={() => handleNavigate('settings')}
-        onNavigateHome={() => handleNavigate('home')}
-        onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-      />
-      
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
-      />
-
-      <CreatePostModal 
-        isOpen={isCreatePostModalOpen}
-        onClose={() => {
-            setIsCreatePostModalOpen(false);
-            setCreatePostDefaultId(undefined); // Reset
-        }}
-        communities={COMMUNITIES_DATA}
-        defaultCommunityId={createPostDefaultId || (currentView === 'community_detail' && selectedCommunity ? selectedCommunity.id : undefined)}
-      />
-
-      <UploadAppModal 
-        isOpen={isUploadAppModalOpen}
-        onClose={() => {
-            setIsUploadAppModalOpen(false);
-            setEditingApp(null);
-        }}
-        onSubmit={handleSaveApp}
-        initialData={editingApp ? { name: editingApp.name, url: editingApp.url, desc: editingApp.desc } : undefined}
-      />
-
-      <div className="flex justify-center max-w-[1600px] mx-auto pt-[64px]">
-        {/* Sidebar with Mobile Support */}
-        <Sidebar 
-          currentView={currentView as any} 
-          onNavigate={(view) => handleNavigate(view)} 
-          isLoggedIn={isLoggedIn}
-          myCommunities={joinedCommunities}
-          onNavigateToCommunity={handleNavigateToCommunity}
-          isOpen={isMobileMenuOpen}
-          onClose={() => setIsMobileMenuOpen(false)}
+      <div className="min-h-screen bg-white text-gray-900 font-sans">
+        <Navbar 
+          isLoggedIn={isLoggedIn} 
+          currentUser={currentUser}
+          onOpenLoginModal={() => setIsLoginModalOpen(true)} 
+          onOpenCreatePost={() => setIsCreatePostModalOpen(true)}
+          onLogout={handleLogout}
+          onNavigateToSettings={() => handleNavigate('settings')}
+          onNavigateToManageApps={() => handleNavigate('manage_apps')}
+          onNavigateHome={() => handleNavigate('home')}
+          onNavigateToAiChat={handleNavigateToAiChat}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          currentCommunity={currentView === 'community_detail' && selectedCommunity ? selectedCommunity : undefined}
+        />
+        
+        <LoginModal 
+          isOpen={isLoginModalOpen} 
+          onClose={() => setIsLoginModalOpen(false)}
+          onLoginSuccess={handleLoginSuccess}
         />
 
-        {/* Main Content */}
-        <main className="flex-1 w-full max-w-[900px] px-0 sm:px-6 py-6 min-w-0 border-x-0 sm:border-x border-gray-100/50">
-          {renderContent()}
-        </main>
-
-        {/* Right Sidebar - Pass Communities Data Slice & View All Handler */}
-        <RightSidebar 
-          communities={COMMUNITIES_DATA.slice(0, 5)} 
-          onViewAll={() => handleNavigate('communities')}
-          onNavigateToCommunity={handleNavigateToCommunity}
+        <CreatePostModal 
+          isOpen={isCreatePostModalOpen}
+          onClose={() => {
+              setIsCreatePostModalOpen(false);
+              setCreatePostDefaultId(undefined); // Reset
+          }}
+          communities={COMMUNITIES_DATA}
+          defaultCommunityId={createPostDefaultId || (currentView === 'community_detail' && selectedCommunity ? selectedCommunity.id : undefined)}
         />
+
+        <UploadAppModal 
+          isOpen={isUploadAppModalOpen}
+          onClose={() => {
+              setIsUploadAppModalOpen(false);
+              setEditingApp(null);
+          }}
+          onSubmit={handleSaveApp}
+          initialData={editingApp ? { name: editingApp.name, url: editingApp.url, desc: editingApp.desc } : undefined}
+        />
+
+        <div className="flex justify-center max-w-[1600px] mx-auto pt-[64px]">
+          {/* Sidebar with Mobile Support */}
+          <Sidebar 
+            currentView={currentView as any} 
+            onNavigate={(view) => handleNavigate(view)} 
+            isLoggedIn={isLoggedIn}
+            myCommunities={joinedCommunities}
+            onNavigateToCommunity={handleNavigateToCommunity}
+            isOpen={isMobileMenuOpen}
+            onClose={() => setIsMobileMenuOpen(false)}
+          />
+
+          {/* Main Content */}
+          <main className={`flex-1 w-full ${currentView === 'ai_chat' ? 'px-0 max-w-full' : 'max-w-[900px] px-0 sm:px-6'} py-6 min-w-0 border-x-0 sm:border-x border-gray-100/50`}>
+            {renderContent()}
+          </main>
+
+          {/* Right Sidebar - Pass Communities Data Slice & View All Handler */}
+          {/* Only show Right Sidebar if NOT in AI Chat view to maximize focus space */}
+          {currentView !== 'ai_chat' && (
+            <RightSidebar 
+              communities={COMMUNITIES_DATA.slice(0, 5)} 
+              onViewAll={() => handleNavigate('communities')}
+              onNavigateToCommunity={handleNavigateToCommunity}
+            />
+          )}
+        </div>
       </div>
-    </div>
   );
 };
-
-export default App;

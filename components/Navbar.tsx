@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, Plus, Menu, Zap, User, LogIn, ChevronDown, LogOut, Settings, Sparkles, Flame } from 'lucide-react';
+import { Search, Bell, Plus, Menu, User, ChevronDown, LogOut, Settings, Box, Sparkles, X } from 'lucide-react';
 import { Button } from './Button';
-import { askGemini } from '../services/gemini';
 import { Logo } from './Logo';
+import { Community } from '../types';
 
 interface NavbarProps {
   isLoggedIn: boolean;
@@ -11,8 +11,11 @@ interface NavbarProps {
   onOpenCreatePost: () => void;
   onLogout: () => void;
   onNavigateToSettings: () => void;
+  onNavigateToManageApps: () => void;
   onNavigateHome: () => void;
-  onToggleMobileMenu?: () => void; // New prop for mobile menu
+  onNavigateToAiChat: (query: string) => void;
+  onToggleMobileMenu?: () => void;
+  currentCommunity?: Community;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -22,16 +25,27 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreatePost, 
   onLogout, 
   onNavigateToSettings,
+  onNavigateToManageApps,
   onNavigateHome,
-  onToggleMobileMenu
+  onNavigateToAiChat,
+  onToggleMobileMenu,
+  currentCommunity
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [searchMode, setSearchMode] = useState<'normal' | 'ai'>('normal'); 
-  const inputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Controls whether we are searching in context or globally
+  const [showCommunityContext, setShowCommunityContext] = useState(false);
+
+  // Sync state with prop
+  useEffect(() => {
+    if (currentCommunity) {
+      setShowCommunityContext(true);
+    } else {
+      setShowCommunityContext(false);
+    }
+  }, [currentCommunity]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -48,35 +62,27 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
   }, [isProfileMenuOpen]);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleNormalSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-
-    if (searchMode === 'ai') {
-        setIsSearching(true);
-        setAiResponse(null);
-        const result = await askGemini(searchQuery);
-        setAiResponse(result);
-        setIsSearching(false);
+    
+    if (showCommunityContext && currentCommunity) {
+        alert(`正在 r/${currentCommunity.name} 内搜索: ${searchQuery} (模拟结果)`);
     } else {
-        // Mock normal search
-        alert(`正在搜索: ${searchQuery} (模拟)`);
+        alert(`正在执行全站搜索: ${searchQuery} (模拟结果)`);
     }
   };
 
-  const activateAiMode = () => {
-      setSearchMode('ai');
-      setAiResponse(null);
-      setTimeout(() => inputRef.current?.focus(), 100);
-  };
-
-  const toggleSearchMode = () => {
-      setSearchMode(prev => prev === 'normal' ? 'ai' : 'normal');
-      setAiResponse(null);
+  const handleAiSearch = () => {
+      if (!isLoggedIn) {
+        onOpenLoginModal();
+        return;
+      }
+      onNavigateToAiChat(searchQuery);
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-[64px] bg-white/90 backdrop-blur-md border-b border-gray-100/80 flex items-center px-4 justify-between transition-shadow duration-200">
+    <header className="fixed top-0 left-0 right-0 z-50 h-[64px] bg-white/95 backdrop-blur-md border-b border-gray-100 flex items-center px-4 justify-between transition-shadow duration-200">
       {/* Left: Logo */}
       <div className="flex items-center gap-2 lg:gap-3">
         <button 
@@ -99,91 +105,65 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Center: Search */}
-      <div className="flex-1 max-w-2xl px-2 sm:px-4 lg:px-12 relative group">
-        <form onSubmit={handleSearch} className="relative transition-all duration-300">
-          {/* Left Icon (Search or Fire) */}
-          <div 
-             className="absolute left-1.5 top-1/2 -translate-y-1/2 cursor-pointer p-1.5 rounded-full hover:bg-gray-100 transition-colors z-10"
-             onClick={toggleSearchMode}
-             title={searchMode === 'ai' ? "切换回普通搜索" : "切换到火妙AI搜索"}
-          >
-             {searchMode === 'ai' ? (
-                <div className="text-orange-500 animate-pulse">
-                   <Flame size={18} fill="currentColor" />
-                </div>
-             ) : (
-                <Search size={18} strokeWidth={1.5} className="text-gray-400" />
-             )}
+      <div className="flex-1 max-w-2xl px-2 sm:px-4 lg:px-8">
+        <form 
+          onSubmit={handleNormalSearch} 
+          className="relative group flex items-center w-full h-10 bg-gray-100/50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus-within:bg-white focus-within:border-broad-500 focus-within:ring-4 focus-within:ring-broad-50 transition-all"
+        >
+          {/* Search Icon */}
+          <div className="pl-3 text-gray-400 group-focus-within:text-broad-500 transition-colors shrink-0">
+             <Search size={18} strokeWidth={2} />
           </div>
+
+          {/* Community Chip / Pill */}
+          {showCommunityContext && currentCommunity && (
+              <div className="ml-2 flex items-center gap-1 bg-gray-200/80 rounded-full px-2 py-0.5 text-xs font-bold text-gray-700 animate-in fade-in zoom-in-95 duration-200 shrink-0 max-w-[150px]">
+                 <span className="truncate">r/{currentCommunity.name}</span>
+                 <button 
+                   type="button" 
+                   onClick={() => setShowCommunityContext(false)}
+                   className="p-0.5 hover:bg-gray-300 rounded-full text-gray-500 transition-colors"
+                 >
+                    <X size={12} strokeWidth={3} />
+                 </button>
+              </div>
+          )}
           
+          {/* Input */}
           <input 
-            ref={inputRef}
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={searchMode === 'ai' ? "问问火妙AI..." : "搜索 BROADFORUM..."}
-            className={`w-full h-10 pl-11 pr-[40px] sm:pr-[140px] bg-gray-50 border border-gray-200 rounded-full hover:bg-white hover:border-broad-300 focus:bg-white focus:outline-none transition-all text-sm focus:shadow-sm placeholder-gray-400 ${searchMode === 'ai' ? 'focus:border-orange-400 ring-1 ring-transparent focus:ring-orange-100' : 'focus:border-broad-500'}`}
+            placeholder={showCommunityContext && currentCommunity ? "搜索社区内容..." : "搜索 BroadForum..."}
+            className="flex-1 w-full bg-transparent border-none outline-none focus:ring-0 text-sm placeholder-gray-400 text-gray-900 px-3 h-full"
           />
           
-          {/* Close AI Button for Mobile/Desktop */}
-           {searchMode === 'ai' && (
-              <div 
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 cursor-pointer hover:bg-gray-300 sm:right-[100px]"
-                  onClick={() => {
-                      setSearchMode('normal');
-                      setAiResponse(null);
-                  }}
-                  title="退出 AI 模式"
-              >
-                  <span className="text-xs font-bold">X</span>
-              </div>
-          )}
+           {/* Right Actions */}
+           <div className="flex items-center gap-1 pr-1 shrink-0">
+             {/* Normal Search Button (Mobile mostly, or explicit click) */}
+             <button 
+                type="submit"
+                className="hidden sm:block p-1.5 rounded-full text-gray-400 hover:text-broad-600 hover:bg-gray-100 transition-colors"
+                title="搜索"
+             >
+                <div className="w-0.5 h-0.5"></div> {/* Spacer or hidden visual if needed, currently reusing Search icon from left visually */}
+             </button>
 
-          {/* Right Action Button (Desktop Only) */}
-          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center hidden sm:flex">
-            {searchMode === 'ai' ? (
-                 <button 
-                    type="submit"
-                    className="text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1.5 rounded-full hover:shadow-md hover:from-orange-600 hover:to-red-600 font-bold transition-all flex items-center gap-1 disabled:opacity-70"
-                    disabled={isSearching || !searchQuery}
-                 >
-                   {isSearching ? '思考中...' : (
-                       <>
-                         <Sparkles size={12} fill="currentColor" /> 提问
-                       </>
-                   )}
-                 </button>
-            ) : (
-                 <button 
-                    type="button"
-                    onClick={activateAiMode}
-                    className="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded-full hover:bg-orange-100 hover:border-orange-300 font-bold transition-all flex items-center gap-1.5 group/btn"
-                 >
-                   <Flame size={12} className="group-hover/btn:scale-110 transition-transform" />
-                   Ask 火妙AI
-                 </button>
-            )}
+             <div className="w-[1px] h-5 bg-gray-200 mx-0.5 hidden sm:block"></div>
+
+             {/* AI Search Button */}
+             <button 
+                type="button"
+                onClick={handleAiSearch}
+                className="flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-full bg-gradient-to-r from-orange-50 to-red-50 text-orange-600 border border-orange-100 hover:from-orange-100 hover:to-red-100 hover:border-orange-200 transition-all group/ai"
+                title="进入 AI 对话模式"
+             >
+                <Sparkles size={14} className="group-hover/ai:animate-pulse" />
+                <span className="text-xs font-bold whitespace-nowrap hidden sm:inline">Ask 火妙AI</span>
+                <span className="text-xs font-bold whitespace-nowrap sm:hidden">AI</span>
+             </button>
           </div>
         </form>
-
-        {/* AI Response Dropdown */}
-        {aiResponse && (
-          <div className="absolute top-full left-2 right-2 sm:left-4 sm:right-4 lg:left-12 lg:right-12 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-5 z-50 animate-in fade-in slide-in-from-top-2 ring-1 ring-black/5">
-            <div className="flex items-center gap-2 mb-3 text-orange-600 font-bold text-sm uppercase tracking-wide">
-              <Sparkles size={16} strokeWidth={1.5} className="animate-pulse" />
-              火妙AI 智能回答
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed bg-orange-50/30 p-4 rounded-lg border border-orange-100/50 whitespace-pre-wrap">{aiResponse}</p>
-            <div className="mt-3 text-right">
-              <button 
-                onClick={() => setAiResponse(null)}
-                className="text-xs font-medium text-gray-400 hover:text-gray-700 underline decoration-gray-200 underline-offset-2 transition-colors"
-              >
-                关闭回答
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Right: Actions */}
@@ -254,6 +234,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                        <p className="text-sm font-bold text-gray-900">{currentUser?.displayName}</p>
                        <p className="text-xs text-gray-500">1.2k karma</p>
                     </div>
+                    <button 
+                       onClick={() => { setIsProfileMenuOpen(false); onNavigateToManageApps(); }}
+                       className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-broad-600 flex items-center gap-2 transition-colors"
+                    >
+                       <Box size={16} strokeWidth={1.5} />
+                       管理我的应用
+                    </button>
                     <button 
                        onClick={() => { setIsProfileMenuOpen(false); onNavigateToSettings(); }}
                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-broad-600 flex items-center gap-2 transition-colors"

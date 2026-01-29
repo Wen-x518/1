@@ -46,22 +46,6 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({ communities, onViewA
         </div>
       </div>
 
-      {/* Premium / Ad Placeholder */}
-      <div className="bg-gradient-to-br from-white to-blue-50 rounded-xl border border-gray-100 p-4 relative overflow-hidden group hover:border-broad-200 transition-colors shadow-sm">
-        <div className="flex items-center gap-2 mb-2 relative z-10">
-             <ShieldCheck className="text-broad-600" size={20} strokeWidth={1.5} />
-             <span className="font-bold text-xs text-gray-900 tracking-wide">BROAD PREMIUM</span>
-        </div>
-        <p className="text-xs text-gray-500 mb-4 leading-relaxed relative z-10">支持独立思考，享受无干扰的阅读空间。</p>
-        <Button 
-          variant="secondary" 
-          disabled
-          className="w-full text-sm relative z-10 bg-gray-200 text-gray-400 cursor-not-allowed border-none shadow-none"
-        >
-          待开发
-        </Button>
-      </div>
-
       {/* Footer Links */}
       <div className="text-xs text-gray-400 px-2 space-y-3 sticky top-[80px]">
          <div className="pt-3 border-t border-gray-100">

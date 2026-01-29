@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, TrendingUp, HelpCircle, FileText, Briefcase, ChevronDown, ChevronUp, Users, Info, Cpu, Settings, X, Box } from 'lucide-react';
+import { Home, TrendingUp, HelpCircle, FileText, Briefcase, ChevronDown, ChevronUp, Users, Info, Cpu, Settings, X, Box, Compass } from 'lucide-react';
 import { Community } from '../types';
 import { Button } from './Button';
 
@@ -33,7 +33,7 @@ const SidebarSection: React.FC<SidebarSectionProps> = ({ title, children, defaul
           {isOpen ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />}
         </button>
       )}
-      {isOpen && <div className="mt-1">{children}</div>}
+      {isOpen && <div className="mt-1 space-y-0.5">{children}</div>}
     </div>
   );
 };
@@ -48,12 +48,13 @@ const SidebarItem: React.FC<{
   <button 
     onClick={comingSoon ? undefined : onClick}
     disabled={comingSoon}
-    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 rounded-r-full mr-2 text-left 
-      ${active ? 'bg-blue-50 text-broad-600 border-l-4 border-broad-600' : 'border-l-4 border-transparent'}
-      ${comingSoon ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+    className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium transition-all duration-200 rounded-r-full mr-2 text-left relative overflow-hidden
+      ${active ? 'bg-blue-50 text-broad-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+      ${comingSoon ? 'opacity-50 cursor-not-allowed text-gray-400' : ''}
     `}
   >
-    <span className={`${active ? 'text-broad-600' : 'text-gray-400'} ${comingSoon ? '' : 'group-hover:text-gray-600'}`}>
+    {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-broad-600 rounded-r"></div>}
+    <span className={`${active ? 'text-broad-600' : 'text-gray-400'} ${comingSoon ? '' : 'group-hover:text-gray-600'} transition-colors`}>
       {icon}
     </span>
     <span className="truncate">{label}</span>
@@ -91,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
           lg:static lg:block lg:h-[calc(100vh-64px)] lg:sticky lg:top-[64px] lg:overflow-y-auto lg:z-0
           flex flex-col
-          pt-0 lg:pt-4
+          pt-0 lg:pt-2
       `}>
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
@@ -101,8 +102,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar pt-2 lg:pt-0">
-          <div className="pb-2">
+        <div className="flex-1 overflow-y-auto custom-scrollbar pt-2 lg:pt-0 pb-4">
+          
+          {/* Main Feeds */}
+          <SidebarSection>
             <SidebarItem 
               icon={<Home size={20} strokeWidth={1.5} />} 
               label="主页" 
@@ -115,15 +118,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               active={currentView === 'popular'} 
               onClick={() => onNavigate('popular')}
             />
-            <SidebarItem 
-              icon={<Users size={20} strokeWidth={1.5} />} 
+          </SidebarSection>
+
+          {/* Discovery Section */}
+          <SidebarSection title="发现">
+             <SidebarItem 
+              icon={<Compass size={20} strokeWidth={1.5} />} 
               label="社区广场" 
               active={currentView === 'communities'} 
               onClick={() => onNavigate('communities')}
             />
-          </div>
-
-          <SidebarSection title="主题板块">
              <SidebarItem 
                icon={<Box size={20} strokeWidth={1.5} />} 
                label="OPC 开放平台" 
@@ -153,18 +157,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </SidebarSection>
           )}
-
-          <SidebarSection title="平台资源">
-            <SidebarItem icon={<Info size={18} strokeWidth={1.5} />} label="关于我们" comingSoon />
-            <SidebarItem icon={<HelpCircle size={18} strokeWidth={1.5} />} label="帮助中心" comingSoon />
-            <SidebarItem icon={<FileText size={18} strokeWidth={1.5} />} label="官方博客" comingSoon />
-            <SidebarItem icon={<Briefcase size={18} strokeWidth={1.5} />} label="加入我们" comingSoon />
-          </SidebarSection>
         </div>
         
-        <div className="px-4 py-6 text-xs text-gray-300 border-t border-gray-100 mt-auto bg-gray-50/30">
+        <div className="px-4 py-4 text-xs text-gray-300 border-t border-gray-100 mt-auto bg-gray-50/30">
           <p>BROADFORUM © 2024.</p>
-          <p className="mt-1">汇聚多元视角，连接无限可能。</p>
         </div>
       </nav>
     </>
